@@ -9,7 +9,7 @@ export const SignUp = async (req, res) => {
             Birthday, Sex
          } = req.body
 
-        if(!Email || !Password || !FirstName || !LastName || !Phone || !Birthday || !Sex) 
+        if(!Email || !Password || !FirstName || !LastName) 
             return res.status(400).json({
                 success: false,
                 message: "Vui lòng không để trống trường này."
@@ -34,14 +34,13 @@ export const SignUp = async (req, res) => {
             })
         
         // Check phone
-        // const regexPhone =
-        // /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+        const regexPhone = /^[0-9]+$/
 
-        // if(!regexPhone.test(Phone)) 
-        //     return res.status(400).json({
-        //         success: false,
-        //         message: "Số điện thoại không hợp lệ."
-        //     })
+        if(!regexPhone.test(Phone)) 
+            return res.status(400).json({
+                success: false,
+                message: "Số điện thoại không hợp lệ."
+            })
 
         const existPhone = await User.findOne({ Phone })
         if(existPhone) 
@@ -60,23 +59,28 @@ export const SignUp = async (req, res) => {
         const salt = await bcrypt.genSaltSync(10)
         const hashPassword = await bcrypt.hashSync(Password, salt)
 
-        const createUser = new User({
-            FirstName,
-            LastName, 
+        const createUser = new User({ 
             Phone,
             Birthday,
             Sex
         })
+        console.log(createUser._id)
 
         const createAccount = new Account({
+            FirstName,
+            LastName,
             Email,
             Password: hashPassword,
             UserId: createUser._id
         })
 
-        // const token = await jwt.sign({ id: createAccount._id }, process.envACCESS_TOKEN_JWT, { expiresIn: '7d' })
+        await createUser.save()
+        await createAccount.save()
+        console.log(createAccount)
 
-        // console.log("token: " + token)
+        // const token = await jwt.sign({ id: createAccount._id }, process.env.ACCESS_TOKEN_JWT, { expiresIn: "7d" })
+
+        // console.log(token)
 
         return res.status(200).json({
             success: true,
@@ -92,29 +96,97 @@ export const SignUp = async (req, res) => {
 
 export const SignIn = async (req, res) => {
     try {
-        const { Email, Password } = req.body
+        const { email, password } = req.body
 
-        if(!Email || !Password)
+        if(!email || !password)
             return res.status(400).json({
                 success: false,
                 message: "Vui lòng không để trống trường này."
             })
 
-        const auth = await Account.findOne({ Email })
-        console.log(auth)
+        // Check email
+        const regexEmail =
+        /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
+        if(!regexEmail.test(email))
+            return res.status(400).json({
+                success: false,
+                message: "Địa chỉ email không hợp lệ."
+            })
+            
+        const auth = await Account.findOne({ Email: email }).select("-_id").populate("UserId")
         if(!auth)
             return res.status(400).json({
                 success: false,
                 message: "Email hoặc mật khẩu không chính xác."
             })
-
-        const comparePassword = await bcrypt.compareSync(Password, auth.Password)
+        
+        //  Check Password
+        const comparePassword = await bcrypt.compareSync(password, auth.Password)
         if(!comparePassword)
             return res.status(400).json({
                 success: false,
                 message: "Email hoặc mật khẩu không chính xác."
             })
+        
+        const {Password, ...user} = auth._doc
+        const token = await jwt.sign({ user }, process.env.ACCESS_TOKEN_JWT)
+
+        return res.cookie("token", token).status(200).json({
+                    success: true,
+                    message: "Đăng nhập thành công!",
+                    user,
+                    token
+                })
+        
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: err.message
+        })
+    }
+}
+
+
+export const SignOut = (req, res) => {
+    try {
+        return res.clearCookie("token").status(200).json({
+            success: true,
+            message: "Đăng xuất thành công!"
+        })
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: err.message
+        })
+    }
+}
+
+export const GetUserId = async (req, res) => {
+    try {
+        const id = req.params.id
+        const auth = await Account.find({}).populate("UserId")
+        
+        return res.status(200).json({
+            success: true,
+            user: JSON.stringify(auth)
+        })
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: err.message
+        })
+    }
+}
+
+export const GetAllUser = async (req, res) => {
+    try {
+        const auth = await Account.find({}).select("-Password").populate("UserId")
+        
+        return res.status(200).json({
+            success: true,
+            user: JSON.stringify(auth)
+        })
     } catch (err) {
         return res.status(500).json({
             success: false,

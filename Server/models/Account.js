@@ -1,6 +1,14 @@
 import mongoose from "mongoose"
 
 const isAccountSchema = new mongoose.Schema({
+    FirstName: {
+        type: String,
+        required: true,
+    },
+    LastName: {
+        type: String,
+        required: true,
+    },
     Email: {
         type: String,
         unique: true,
@@ -14,6 +22,11 @@ const isAccountSchema = new mongoose.Schema({
     UserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
+    },
+    isAdmin: {
+        type: String,
+        default: "customer",
+        enum: ["customer", "admin"]
     }
 }, {
     timestamps: true

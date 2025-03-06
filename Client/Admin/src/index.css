@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@import "tailwindcss";
+
+body {
+  font-family: "Inter", serif;
+  font-size: 14px;
+}
+
+@theme {
+  --color-Primary: #c30000;
+  --color-Blue: #007aff;
+  --color-Gray: #898989;
+  --color-White: #ffffff
+}
+
+table thead th {
+  border: 1px solid #e9e8e8;
+  color: white
+}
+
+table tbody td {
+  border: 1px solid #e9e8e8;
+}
+
+.FlexCenter {
+  @apply flex justify-center items-center
+}
+
+

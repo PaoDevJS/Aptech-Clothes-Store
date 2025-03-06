@@ -1,34 +1,22 @@
 import mongoose from "mongoose"
 
 const isUserSchema = new mongoose.Schema({
-    FirstName: {
-        type: String,
-        required: true,
-    },
-    LastName: {
-        type: String,
-        required: true,
-    },
     Phone: {
         type: String,
-        required: true,
         unique: true
     },
     Birthday: {
-        type: Date,
-        required: true
+        type: Date
     },
     Sex: {
-        type: String,
-        required: true
+        type: String
     }, 
     Avatar: {
         type: String,
         default: "https://nguyetanh.vn/wp-content/uploads/2015/10/default_avatar.png"
     },
-    isAdmin: {
-        type: Boolean,
-        default: false
+    Address: {
+        type: String
     }
 }, { 
     timestamps: true
